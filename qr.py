@@ -1,45 +1,30 @@
-# Importing library
 import cv2
 from pyzbar.pyzbar import decode
- 
-# Make one method to decode the barcode 
-def BarcodeReader(image):
-    
-    # read the image in numpy array using cv2
-    img = cv2.VideoCapture("http://100.83.117.231:8080/video")
-     
-    # Decode the barcode image
-    detectedBarcodes = decode(img)
-     
-    # If not detected then print the message
-    if not detectedBarcodes:
-        print("Barcode Not Detected or your barcode is blank/corrupted!")
-    else:
-      
-          # Traverse through all the detected barcodes in image
-        for barcode in detectedBarcodes:  
-          
-            # Locate the barcode position in image
-            (x, y, w, h) = barcode.rect
-            
-            # Put the rectangle in image using 
-            # cv2 to highlight the barcode
-            cv2.rectangle(img, (x-10, y-10),
-                          (x + w+10, y + h+10), 
-                          (255, 0, 0), 2)
-            
-            if barcode.data!="":
-              
-            # Print the barcode data
-                print(barcode.data)
-                print(barcode.type)
-                
-    #Display the image
-    cv2.imshow("Image", img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
 
-if __name__ == "__main__":
-  # Take the image from user
-    image="Img.jpg"
-    BarcodeReader(image)
+# open camera
+cap = cv2.VideoCapture(0)   # laptop webcam
+
+while True:
+    ret, frame = cap.read()
+
+    if not ret:
+        print("Camera not working")
+        break
+
+    # detect QR / barcode
+    barcodes = decode(frame)
+
+    for barcode in barcodes:
+        data = barcode.data.decode("utf-8")
+        print("Detected:", data)
+
+        x, y, w, h = barcode.rect
+        cv2.rectangle(frame, (x, y), (x+w, y+h), (0,255,0), 2)
+
+    cv2.imshow("QR Scanner", frame)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()
