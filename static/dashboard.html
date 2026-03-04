@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>♻️ Waste Segregation Dashboard</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f7f8;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        header {
+            background: #2e7d32;
+            color: white;
+            padding: 20px;
+            font-size: 24px;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin: 20px auto;
+            width: 90%;
+            max-width: 700px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        #credits {
+            font-size: 22px;
+            color: #2e7d32;
+        }
+
+        .stats-box {
+            display: flex;
+            justify-content: space-around;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        footer {
+            margin-top: 30px;
+            padding: 10px;
+            font-size: 14px;
+            color: #555;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    ♻️ Smart Waste Segregation Dashboard
+</header>
+
+<div class="container">
+
+    <!-- Eco Credits -->
+    <div class="card">
+        <h3 id="credits">Eco Credits: 0</h3>
+        <p>Earn credits by disposing waste correctly 🌱</p>
+    </div>
+
+    <!-- Total & Today Waste -->
+    <div class="card">
+        <div class="stats-box">
+            <div>Total Waste: <span id="totalWaste">0</span></div>
+            <div>Today Waste: <span id="todayWaste">0</span></div>
+        </div>
+    </div>
+
+    <!-- Pie Chart -->
+    <div class="card">
+        <h3>Waste Category Distribution</h3>
+        <canvas id="wasteChart"></canvas>
+    </div>
+
+    <!-- Bar Chart -->
+    <div class="card">
+        <h3>Last 7 Days Activity</h3>
+        <canvas id="barChart"></canvas>
+    </div>
+
+    <div class="card">
+    <h3>🏆 Top 5 Contributors</h3>
+    <ul id="topUsers" style="list-style:none; padding:0;"></ul>
+    </div>
+
+</div>
+
+<footer>
+    AI Waste Segregation Project | AIML
+</footer>
+
+<script>
+    const API_BASE = "http://127.0.0.1:5000";
+    const USER_ID = "22A91A61XX";
+
+    // ==========================
+    // PIE CHART
+    // ==========================
+    const pieCtx = document.getElementById("wasteChart").getContext("2d");
+
+    const wasteChart = new Chart(pieCtx, {
+        type: "pie",
+        data: {
+            labels: [],
+            datasets: [{
+                data: [],
+                backgroundColor: [
+                    "#e53935",
+                    "#43a047",
+                    "#fb8c00",
+                    "#1e88e5"
+                ]
+            }]
+        },
+        options: { responsive: true }
+    });
+
+    // ==========================
+    // BAR CHART
+    // ==========================
+    const barCtx = document.getElementById("barChart").getContext("2d");
+
+    const barChart = new Chart(barCtx, {
+        type: "bar",
+        data: {
+            labels: [],
+            datasets: [{
+                label: "Waste Count",
+                data: [],
+                backgroundColor: "#43a047"
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // ==========================
+    // LOAD CATEGORY STATS
+    // ==========================
+    function loadStats() {
+        fetch(API_BASE + "/stats")
+            .then(res => res.json())
+            .then(data => {
+                wasteChart.data.labels = Object.keys(data);
+                wasteChart.data.datasets[0].data = Object.values(data);
+                wasteChart.update();
+            });
+    }
+
+    // ==========================
+    // LOAD CREDITS
+    // ==========================
+    function loadCredits() {
+        fetch(API_BASE + "/credits/" + USER_ID)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("credits").innerText =
+                    "Eco Credits: " + data.credits;
+            });
+    }
+
+    // ==========================
+    // LOAD ANALYTICS
+    // ==========================
+    function loadTopUsers() {
+    fetch(API_BASE + "/top-users")
+        .then(res => res.json())
+        .then(data => {
+
+            const list = document.getElementById("topUsers");
+            list.innerHTML = "";
+
+            data.forEach((user, index) => {
+                const li = document.createElement("li");
+                li.style.padding = "8px";
+                li.style.fontWeight = "bold";
+                li.innerText =
+                    "#" + (index + 1) +
+                    "  " + user.userId +
+                    "  —  " + user.credits + " pts"+
+                    "  🏅 " + user.badge;
+
+                list.appendChild(li);
+            });
+        });
+}
+
+    // ==========================
+    // INITIAL LOAD
+    // ==========================
+    loadStats();
+    loadCredits();
+    loadAnalytics();
+    loadTopUsers(); 
+
+    setInterval(() => {
+        loadStats();
+        loadCredits();
+        loadAnalytics();
+        loadTopUsers(); 
+    }, 3000);
+
+</script>
+
+</body>
+</html>
